@@ -177,6 +177,19 @@ int main(int argc, char *argv[])
 #ifdef ENABLE_GSTREAMERMM
 	// Initialise gstreamermm. Must be called before any other GLib stuff.
 	Gst::init();
+
+	Glib::RefPtr<Glib::MainLoop> main_loop = Glib::MainLoop::create();
+
+	Glib::RefPtr<Gst::Element> e = Gst::Parse::launch(\
+		// "filesrc location=input.dat ! sigrokdecoder");
+		"sigrok_device ! sigrokdecoder");
+	Glib::RefPtr<Gst::Pipeline> pipeline = pipeline.cast_static(e);
+
+	pipeline->set_state(Gst::STATE_PLAYING);
+	main_loop->run(); // FIXME: Will hang.
+	pipeline->set_state(Gst::STATE_NULL);
+
+	return 0;
 #endif
 
 	Application a(argc, argv);
