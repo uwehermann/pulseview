@@ -204,6 +204,10 @@ int main(int argc, char *argv[])
 
 	device->link(filesink);
 
+	libsigrok_device->open();
+	libsigrok_device->config_set(sigrok::ConfigKey::LIMIT_SAMPLES,
+		Glib::Variant<uint64_t>::create(10));
+
 	pipeline->set_state(Gst::STATE_PLAYING);
 	main_loop->run();
 	pipeline->set_state(Gst::STATE_NULL);
