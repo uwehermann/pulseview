@@ -192,10 +192,10 @@ int main(int argc, char *argv[])
 
 	auto device = Srf::LegacyCaptureDevice::create(libsigrok_device);
 
-	auto output_format = context->output_formats()["bits"];
-	auto libsigrok_output = output_format->create_output(libsigrok_device);
+	auto libsigrok_output_format = context->output_formats()["bits"];
 
-	auto output = Srf::LegacyOutput::create(libsigrok_output);
+	auto output = Srf::LegacyOutput::create(libsigrok_output_format,
+			libsigrok_device);
 
 	auto main_loop = Glib::MainLoop::create();
 
