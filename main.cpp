@@ -192,17 +192,19 @@ int main(int argc, char *argv[])
 
 	auto device = Srf::LegacyCaptureDevice::create(libsigrok_device);
 
-	auto filesink = Gst::ElementFactory::create_element("filesink");
-	filesink->set_property("location", Glib::ustring("output.dat"));
+	auto output_format = context->output_formats()["bits"];
+	auto libsigrok_output = output_format->create_output(libsigrok_device);
+
+	auto output = Srf::LegacyOutput::create(libsigrok_output);
 
 	auto main_loop = Glib::MainLoop::create();
 
 	auto pipeline = Gst::Pipeline::create();
 
 	pipeline->add(device);
-	pipeline->add(filesink);
+	pipeline->add(output);
 
-	device->link(filesink);
+	device->link(output);
 
 	libsigrok_device->open();
 	libsigrok_device->config_set(sigrok::ConfigKey::LIMIT_SAMPLES,
