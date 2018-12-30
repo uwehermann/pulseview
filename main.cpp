@@ -178,6 +178,8 @@ int main(int argc, char *argv[])
 	// Initialise gstreamermm. Must be called before any other GLib stuff.
 	Gst::init();
 
+	Srf::init();
+
 	context = sigrok::Context::create();
 
 	auto devices = context->drivers()["fx2lafw"]->scan();
