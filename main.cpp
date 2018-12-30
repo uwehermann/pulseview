@@ -178,6 +178,20 @@ bool bus_message_watch(const Glib::RefPtr<Gst::Bus>&, const Glib::RefPtr<Gst::Me
 	return true;
 }
 
+void cb(struct srd_proto_data *pdata, void *cb_data)
+{
+	struct srd_proto_data_annotation *pda;
+
+	(void)cb_data;
+
+	pda = (srd_proto_data_annotation *)pdata->data;
+
+	printf("        %" PRIu64 "-%" PRIu64 " ", pdata->start_sample, pdata->end_sample);
+	printf("%s: ", pdata->pdo->proto_id);
+	printf("%s%s%s", "'", pda->ann_text[0], "'");
+	printf("\n");
+}
+
 int main(int argc, char *argv[])
 {
 	int ret = 0;
@@ -211,14 +225,42 @@ int main(int argc, char *argv[])
 	auto output = Srf::LegacyOutput::create(libsigrok_output_format,
 			libsigrok_device);
 
+	struct srd_decoder_inst *di;
+	GHashTable *channel_indices;
+	GVariant *var;
+	GHashTable *options;
+	struct srd_session *_session;
+
+	const char *pd = "pwm";
+	// srd_log_loglevel_set(5);
+	srd_init(nullptr);
+	srd_decoder_load_all();
+	srd_session_new(&_session);
+	options = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_variant_unref);
+	di = srd_inst_new(_session, pd, options);
+
+	/* Channel setup */
+	channel_indices = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_variant_unref);
+	var = g_variant_new_int32(0 /* ch idx */);
+	g_variant_ref_sink(var);
+	g_hash_table_insert(channel_indices, g_strdup("data"), var);
+
+	srd_inst_channel_set_all(di, channel_indices);
+	srd_session_metadata_set(_session, SRD_CONF_SAMPLERATE, g_variant_new_uint64(1));
+	srd_pd_output_callback_add(_session, SRD_OUTPUT_ANN, cb, NULL);
+
+	auto decoder = Srf::LegacyDecoder::create(_session, 2 /* unitsize */);
+
 	main_loop = Glib::MainLoop::create();
 
 	auto pipeline = Gst::Pipeline::create();
 
 	pipeline->add(device);
-	pipeline->add(output);
+	// pipeline->add(output);
+	pipeline->add(decoder);
 
-	device->link(output);
+	// device->link(output);
+	device->link(decoder);
 
 	libsigrok_device->open();
 	libsigrok_device->config_set(sigrok::ConfigKey::LIMIT_SAMPLES,
