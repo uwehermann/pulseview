@@ -178,15 +178,30 @@ int main(int argc, char *argv[])
 	// Initialise gstreamermm. Must be called before any other GLib stuff.
 	Gst::init();
 
-	Glib::RefPtr<Glib::MainLoop> main_loop = Glib::MainLoop::create();
+	context = sigrok::Context::create();
 
-	Glib::RefPtr<Gst::Element> e = Gst::Parse::launch(\
-		// "filesrc location=input.dat ! sigrokdecoder");
-		"sigrok_device ! sigrokdecoder");
-	Glib::RefPtr<Gst::Pipeline> pipeline = pipeline.cast_static(e);
+	auto devices = context->drivers()["fx2lafw"]->scan();
+	if (devices.size() == 0)
+	{
+		printf("No device detected\n");
+		return 1;
+	}
+	auto libsigrok_device = devices[0];
+
+	auto device = Srf::LegacyCaptureDevice::create(libsigrok_device);
+
+	auto filesink = Gst::ElementFactory::create_element("filesink");
+	filesink->set_property("location", Glib::ustring("output.dat"));
+
+	auto main_loop = Glib::MainLoop::create();
+
+	auto pipeline = Gst::Pipeline::create();
+
+	pipeline->add(device);
+	pipeline->add(filesink);
 
 	pipeline->set_state(Gst::STATE_PLAYING);
-	main_loop->run(); // FIXME: Will hang.
+	main_loop->run();
 	pipeline->set_state(Gst::STATE_NULL);
 
 	return 0;
