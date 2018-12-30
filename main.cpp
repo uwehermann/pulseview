@@ -220,19 +220,31 @@ int main(int argc, char *argv[])
 
 	auto device = Srf::LegacyCaptureDevice::create(libsigrok_device);
 
+	auto filesrc = Gst::ElementFactory::create_element("filesrc");
+	filesrc->set_property("location", Glib::ustring("input.dat"));
+
+	auto libsigrok_input_format = context->input_formats()["binary"];
+
+	map<string, Glib::VariantBase> in_options;
+	in_options[std::string("samplerate")] = Glib::Variant<uint64_t>::create(1999);
+
+	auto input = Srf::LegacyInput::create(libsigrok_input_format,
+			in_options);
+			
 	auto libsigrok_output_format = context->output_formats()["bits"];
 
 	auto output = Srf::LegacyOutput::create(libsigrok_output_format,
 			libsigrok_device);
 
+#if 0
 	struct srd_decoder_inst *di;
 	GHashTable *channel_indices;
 	GVariant *var;
 	GHashTable *options;
 	struct srd_session *_session;
 
-	const char *pd = "pwm";
-	// srd_log_loglevel_set(5);
+	const char *pd = "uart";
+	srd_log_loglevel_set(5);
 	srd_init(nullptr);
 	srd_decoder_load_all();
 	srd_session_new(&_session);
@@ -243,28 +255,35 @@ int main(int argc, char *argv[])
 	channel_indices = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, (GDestroyNotify)g_variant_unref);
 	var = g_variant_new_int32(0 /* ch idx */);
 	g_variant_ref_sink(var);
-	g_hash_table_insert(channel_indices, g_strdup("data"), var);
+	// g_hash_table_insert(channel_indices, g_strdup("data"), var);
+	g_hash_table_insert(channel_indices, g_strdup("tx"), var);
 
 	srd_inst_channel_set_all(di, channel_indices);
-	srd_session_metadata_set(_session, SRD_CONF_SAMPLERATE, g_variant_new_uint64(1));
+	srd_session_metadata_set(_session, SRD_CONF_SAMPLERATE, g_variant_new_uint64(1000000));
 	srd_pd_output_callback_add(_session, SRD_OUTPUT_ANN, cb, NULL);
 
-	auto decoder = Srf::LegacyDecoder::create(_session, 2 /* unitsize */);
+	auto decoder = Srf::LegacyDecoder::create(_session, 1 /* unitsize */);
+#endif
 
 	main_loop = Glib::MainLoop::create();
 
 	auto pipeline = Gst::Pipeline::create();
 
-	pipeline->add(device);
-	// pipeline->add(output);
-	pipeline->add(decoder);
+	pipeline->add(input);
+	pipeline->add(filesrc);
+	// pipeline->add(device);
+	pipeline->add(output);
+	// pipeline->add(decoder);
 
 	// device->link(output);
-	device->link(decoder);
+	// device->link(decoder);
+	filesrc->link(input);
+	// input->link(decoder);
+	input->link(output);
 
-	libsigrok_device->open();
-	libsigrok_device->config_set(sigrok::ConfigKey::LIMIT_SAMPLES,
-		Glib::Variant<uint64_t>::create(10));
+	// libsigrok_device->open();
+	// libsigrok_device->config_set(sigrok::ConfigKey::LIMIT_SAMPLES,
+	// 	Glib::Variant<uint64_t>::create(10));
 
 	auto bus = pipeline->get_bus();
 
