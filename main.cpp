@@ -202,6 +202,8 @@ int main(int argc, char *argv[])
 	pipeline->add(device);
 	pipeline->add(filesink);
 
+	device->link(filesink);
+
 	pipeline->set_state(Gst::STATE_PLAYING);
 	main_loop->run();
 	pipeline->set_state(Gst::STATE_NULL);
