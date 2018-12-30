@@ -164,6 +164,20 @@ void usage()
 		"\n", PV_BIN_NAME);
 }
 
+Glib::RefPtr<Glib::MainLoop> main_loop;
+
+bool bus_message_watch(const Glib::RefPtr<Gst::Bus>&, const Glib::RefPtr<Gst::Message>& message)
+{
+	switch (message->get_message_type()) {
+	case Gst::MESSAGE_EOS:
+		main_loop->quit();
+		break;
+	default:
+		break;
+	}
+	return true;
+}
+
 int main(int argc, char *argv[])
 {
 	int ret = 0;
@@ -197,7 +211,7 @@ int main(int argc, char *argv[])
 	auto output = Srf::LegacyOutput::create(libsigrok_output_format,
 			libsigrok_device);
 
-	auto main_loop = Glib::MainLoop::create();
+	main_loop = Glib::MainLoop::create();
 
 	auto pipeline = Gst::Pipeline::create();
 
@@ -209,6 +223,10 @@ int main(int argc, char *argv[])
 	libsigrok_device->open();
 	libsigrok_device->config_set(sigrok::ConfigKey::LIMIT_SAMPLES,
 		Glib::Variant<uint64_t>::create(10));
+
+	auto bus = pipeline->get_bus();
+
+	bus->add_watch(sigc::ptr_fun(bus_message_watch));
 
 	pipeline->set_state(Gst::STATE_PLAYING);
 	main_loop->run();
