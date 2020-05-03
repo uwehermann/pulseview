@@ -141,9 +141,8 @@ void Application::collect_version_info(shared_ptr<sigrok::Context> context)
 	version_info_.emplace_back("glibmm", PV_GLIBMM_VERSION);
 	version_info_.emplace_back("Boost", BOOST_LIB_VERSION);
 
-	version_info_.emplace_back("libsigrok", QString("%1/%2 (rt: %3/%4)")
-		.arg(SR_PACKAGE_VERSION_STRING, SR_LIB_VERSION_STRING,
-		sr_package_version_string_get(), sr_lib_version_string_get()));
+	version_info_.emplace_back("libsigrok", QString("%1 (rt: %2)")
+		.arg(SR_PACKAGE_VERSION_STRING, sr_package_version_string_get()));
 
 	GSList *l_orig = sr_buildinfo_libs_get();
 	for (GSList *l = l_orig; l; l = l->next) {
@@ -166,9 +165,8 @@ void Application::collect_version_info(shared_ptr<sigrok::Context> context)
 #ifdef ENABLE_DECODE
 	struct srd_decoder *dec;
 
-	version_info_.emplace_back("libsigrokdecode", QString("%1/%2 (rt: %3/%4)")
-		.arg(SRD_PACKAGE_VERSION_STRING, SRD_LIB_VERSION_STRING,
-		srd_package_version_string_get(), srd_lib_version_string_get()));
+	version_info_.emplace_back("libsigrokdecode", QString("%1 (rt: %2)")
+		.arg(SRD_PACKAGE_VERSION_STRING, srd_package_version_string_get()));
 
 	l_orig = srd_buildinfo_libs_get();
 	for (GSList *l = l_orig; l; l = l->next) {

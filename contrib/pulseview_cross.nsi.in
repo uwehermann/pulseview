@@ -40,7 +40,7 @@
 Name "PulseView"
 
 # Filename of the installer executable.
-OutFile "pulseview-@PV_VERSION_STRING@-installer.exe"
+OutFile "pulseview-@PROJECT_VERSION@-installer.exe"
 
 # Where to install the application.
 InstallDir "$PROGRAMFILES\sigrok\PulseView"
@@ -222,7 +222,7 @@ Section "PulseView (required)" Section1
 	WriteRegStr HKLM "${REGSTR}" "URLUpdateInfo" \
 		"http://sigrok.org/wiki/Downloads"
 	WriteRegStr HKLM "${REGSTR}" "URLInfoAbout" "http://sigrok.org"
-	WriteRegStr HKLM "${REGSTR}" "DisplayVersion" "@PV_VERSION_STRING@"
+	WriteRegStr HKLM "${REGSTR}" "DisplayVersion" "@PROJECT_VERSION@"
 	WriteRegStr HKLM "${REGSTR}" "Contact" \
 		"sigrok-devel@lists.sourceforge.org"
 	WriteRegStr HKLM "${REGSTR}" "Comments" \
